@@ -25,23 +25,64 @@ class CalculatorBloc extends Bloc<CalculatorEvent, CalculatorState> {
   void _clearPressed(ClearPressed event, Emitter<CalculatorState> emit) {
     emit(const CalculatorState(expression: '', result: ''));
   }
-
   void _calculateResult(CalculateResult event, Emitter<CalculatorState> emit) {
     try {
-      final expression =
-          state.expression.replaceAll('x', '*').replaceAll('÷', '/');
-      final parser = Parser();
-      final parsedExpression = parser.parse(expression);
-      final contextModel = ContextModel();
-      final double result =
-          parsedExpression.evaluate(EvaluationType.REAL, contextModel);
-      emit(
-        state.copyWith(
-          result: result.toString(),
-        ),
-      );
+      String finalExpression = state.expression
+          .replaceAll('×', '*')
+          .replaceAll('÷', '/');
+
+      final numberRegExp = RegExp(r'\d+');
+      final operatorRegExp = RegExp(r'[+\-*/]');
+
+      final numbers = numberRegExp
+          .allMatches(finalExpression)
+          .map((e) => BigInt.parse(e.group(0)!))
+          .toList();
+
+      final operators = operatorRegExp
+          .allMatches(finalExpression)
+          .map((e) => e.group(0)!)
+          .toList();
+
+      if (numbers.isEmpty) {
+        emit(state.copyWith(result: 'Error'));
+        return;
+      }
+
+      BigInt result = numbers[0];
+      for (int i = 0; i < operators.length; i++) {
+        final op = operators[i];
+        final num = numbers[i + 1];
+
+        if (op == '+') result += num;
+        else if (op == '-') result -= num;
+        else if (op == '*') result *= num;
+        else if (op == '/') result = result ~/ num;
+      }
+
+      emit(state.copyWith(result: result.toString()));
     } catch (e) {
       emit(state.copyWith(result: 'Error'));
     }
   }
+
+
+// void _calculateResult(CalculateResult event, Emitter<CalculatorState> emit) {
+  //   try {
+  //     final expression =
+  //         state.expression.replaceAll('x', '*').replaceAll('÷', '/');
+  //     final parser = Parser();
+  //     final parsedExpression = parser.parse(expression);
+  //     final contextModel = ContextModel();
+  //     final double result =
+  //         parsedExpression.evaluate(EvaluationType.REAL, contextModel);
+  //     emit(
+  //       state.copyWith(
+  //         result: result.toString(),
+  //       ),
+  //     );
+  //   } catch (e) {
+  //     emit(state.copyWith(result: 'Error'));
+  //   }
+  // }
 }
