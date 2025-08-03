@@ -31,6 +31,7 @@ class CalculatorUI extends StatelessWidget {
         ),
       ),
       body: _body(context),
+      bottomNavigationBar: _calculatorButtons(context),
     );
   }
 
@@ -42,7 +43,7 @@ class CalculatorUI extends StatelessWidget {
           children: [
             _display(),
             const SizedBox(height: 20.0),
-            _calculatorButtons(context),
+            // _calculatorButtons(context),
           ],
         ),
       ),
@@ -96,6 +97,7 @@ class CalculatorUI extends StatelessWidget {
     ];
 
     return GridView.builder(
+      padding: const EdgeInsets.all(16.0),
       shrinkWrap: true,
       itemCount: buttons.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

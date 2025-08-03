@@ -27,20 +27,20 @@ class CalculatorBloc extends Bloc<CalculatorEvent, CalculatorState> {
   }
   void _calculateResult(CalculateResult event, Emitter<CalculatorState> emit) {
     try {
-      String finalExpression = state.expression
+      String expr = state.expression
           .replaceAll('×', '*')
           .replaceAll('÷', '/');
 
       final numberRegExp = RegExp(r'\d+');
       final operatorRegExp = RegExp(r'[+\-*/]');
 
-      final numbers = numberRegExp
-          .allMatches(finalExpression)
+      List<BigInt> numbers = numberRegExp
+          .allMatches(expr)
           .map((e) => BigInt.parse(e.group(0)!))
           .toList();
 
-      final operators = operatorRegExp
-          .allMatches(finalExpression)
+      List<String> operators = operatorRegExp
+          .allMatches(expr)
           .map((e) => e.group(0)!)
           .toList();
 
@@ -49,15 +49,39 @@ class CalculatorBloc extends Bloc<CalculatorEvent, CalculatorState> {
         return;
       }
 
+      // Step 1: Handle * and /
+      for (int i = 0; i < operators.length;) {
+        if (operators[i] == '*' || operators[i] == '/') {
+          BigInt a = numbers[i];
+          BigInt b = numbers[i + 1];
+          BigInt result;
+
+          if (operators[i] == '*') {
+            result = a * b;
+          } else {
+            if (b == BigInt.zero) {
+              emit(state.copyWith(result: 'Divide by 0'));
+              return;
+            }
+            result = a ~/ b;
+          }
+
+          numbers
+            ..removeAt(i)
+            ..removeAt(i)
+            ..insert(i, result);
+          operators.removeAt(i);
+        } else {
+          i++;
+        }
+      }
+
+      // Step 2: Handle + and -
       BigInt result = numbers[0];
       for (int i = 0; i < operators.length; i++) {
-        final op = operators[i];
-        final num = numbers[i + 1];
-
-        if (op == '+') result += num;
-        else if (op == '-') result -= num;
-        else if (op == '*') result *= num;
-        else if (op == '/') result = result ~/ num;
+        BigInt next = numbers[i + 1];
+        if (operators[i] == '+') result += next;
+        if (operators[i] == '-') result -= next;
       }
 
       emit(state.copyWith(result: result.toString()));
@@ -77,6 +101,8 @@ class CalculatorBloc extends Bloc<CalculatorEvent, CalculatorState> {
   //     final double result =
   //         parsedExpression.evaluate(EvaluationType.REAL, contextModel);
   //     emit(
+
+
   //       state.copyWith(
   //         result: result.toString(),
   //       ),
